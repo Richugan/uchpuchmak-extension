@@ -11,6 +11,7 @@
                     .map((btn) => ({
                     label: (btn.label || "").trim() || (btn.url || "").trim(),
                     url: (btn.url || "").trim(),
+                    includeId: btn.includeId !== false,
                 }))
                     .filter((btn) => btn.url.length > 0);
                 resolve(sanitized);
@@ -28,7 +29,7 @@
         const profileId = window.location.href.replace("https://steamcommunity.com", "");
         const anchor = document.createElement("a");
         anchor.className = "custom-link-btn";
-        anchor.href = button.url + profileId;
+        anchor.href = button.includeId !== false ? button.url + profileId : button.url;
         anchor.target = "_blank";
         anchor.rel = "noreferrer noopener";
         anchor.textContent = button.label || button.url;
@@ -122,6 +123,7 @@
             renderButtons((newButtons || []).map((btn) => ({
                 label: (btn.label || "").trim() || (btn.url || "").trim(),
                 url: (btn.url || "").trim(),
+                includeId: btn.includeId !== false,
             })));
         });
     }

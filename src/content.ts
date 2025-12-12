@@ -2,6 +2,7 @@
   interface ButtonConfig {
     label: string;
     url: string;
+    includeId?: boolean;
   }
 
   const STORAGE_KEY = "buttons";
@@ -16,6 +17,7 @@
           .map((btn) => ({
             label: (btn.label || "").trim() || (btn.url || "").trim(),
             url: (btn.url || "").trim(),
+            includeId: btn.includeId !== false,
           }))
           .filter((btn) => btn.url.length > 0);
         resolve(sanitized);
@@ -39,7 +41,7 @@
     );
     const anchor = document.createElement("a");
     anchor.className = "custom-link-btn";
-    anchor.href = button.url + profileId;
+    anchor.href = button.includeId !== false ? button.url + profileId : button.url;
     anchor.target = "_blank";
     anchor.rel = "noreferrer noopener";
     anchor.textContent = button.label || button.url;
@@ -147,6 +149,7 @@
         (newButtons || []).map((btn) => ({
           label: (btn.label || "").trim() || (btn.url || "").trim(),
           url: (btn.url || "").trim(),
+          includeId: btn.includeId !== false,
         }))
       );
     });

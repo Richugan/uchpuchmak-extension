@@ -2,6 +2,7 @@
   interface ButtonConfig {
     label: string;
     url: string;
+    includeId?: boolean;
   }
 
   const STORAGE_KEY = "buttons";
@@ -12,6 +13,12 @@
     "save-button"
   ) as HTMLButtonElement;
   const status = document.getElementById("status") as HTMLParagraphElement;
+
+  function setIdButtonState(button: HTMLButtonElement, enabled: boolean): void {
+    button.dataset.includeId = String(enabled);
+    button.classList.toggle("active", enabled);
+    button.textContent = enabled ? "/steamid ✓" : "/steamid";
+  }
 
   function createRow(value?: ButtonConfig): HTMLDivElement {
     const row = document.createElement("div");
@@ -29,9 +36,14 @@
     urlInput.value = value?.url ?? "";
     urlInput.className = "text-input url-input";
 
-    const label = document.createElement("span");
-    label.innerText = "/steamid";
-    label.className = "id-label";
+    const addIdBtn = document.createElement("button");
+    addIdBtn.type = "button";
+    addIdBtn.className = "ghost add-id-btn";
+    setIdButtonState(addIdBtn, value?.includeId !== false);
+    addIdBtn.addEventListener("click", () => {
+      const isEnabled = addIdBtn.dataset.includeId !== "true";
+      setIdButtonState(addIdBtn, isEnabled);
+    });
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -44,7 +56,7 @@
       }
     });
 
-    row.append(labelInput, urlInput, label, removeBtn);
+    row.append(labelInput, urlInput, addIdBtn, removeBtn);
     return row;
   }
 
@@ -55,8 +67,10 @@
       const inputs = child.querySelectorAll("input");
       const label = (inputs[0]?.value || "").trim();
       const url = (inputs[1]?.value || "").trim();
+      const idToggle = child.querySelector<HTMLButtonElement>(".add-id-btn");
+      const includeId = idToggle?.dataset.includeId !== "false";
       if (url.length > 0) {
-        buttons.push({ label, url });
+        buttons.push({ label, url, includeId });
       }
     });
 

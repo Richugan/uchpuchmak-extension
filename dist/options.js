@@ -5,6 +5,11 @@
     const addButton = document.getElementById("add-button");
     const saveButton = document.getElementById("save-button");
     const status = document.getElementById("status");
+    function setIdButtonState(button, enabled) {
+        button.dataset.includeId = String(enabled);
+        button.classList.toggle("active", enabled);
+        button.textContent = enabled ? "/steamid ✓" : "/steamid";
+    }
     function createRow(value) {
         var _a, _b;
         const row = document.createElement("div");
@@ -19,9 +24,14 @@
         urlInput.placeholder = "https://example.com";
         urlInput.value = (_b = value === null || value === void 0 ? void 0 : value.url) !== null && _b !== void 0 ? _b : "";
         urlInput.className = "text-input url-input";
-        const label = document.createElement("span");
-        label.innerText = "/steamid";
-        label.className = "id-label";
+        const addIdBtn = document.createElement("button");
+        addIdBtn.type = "button";
+        addIdBtn.className = "ghost add-id-btn";
+        setIdButtonState(addIdBtn, (value === null || value === void 0 ? void 0 : value.includeId) !== false);
+        addIdBtn.addEventListener("click", () => {
+            const isEnabled = addIdBtn.dataset.includeId !== "true";
+            setIdButtonState(addIdBtn, isEnabled);
+        });
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
         removeBtn.textContent = "Remove";
@@ -32,7 +42,7 @@
                 list.appendChild(createRow());
             }
         });
-        row.append(labelInput, urlInput, label, removeBtn);
+        row.append(labelInput, urlInput, addIdBtn, removeBtn);
         return row;
     }
     function readRows() {
@@ -42,8 +52,10 @@
             const inputs = child.querySelectorAll("input");
             const label = (((_a = inputs[0]) === null || _a === void 0 ? void 0 : _a.value) || "").trim();
             const url = (((_b = inputs[1]) === null || _b === void 0 ? void 0 : _b.value) || "").trim();
+            const idToggle = child.querySelector(".add-id-btn");
+            const includeId = (idToggle === null || idToggle === void 0 ? void 0 : idToggle.dataset.includeId) !== "false";
             if (url.length > 0) {
-                buttons.push({ label, url });
+                buttons.push({ label, url, includeId });
             }
         });
         return buttons;
