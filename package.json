@@ -1,0 +1,15 @@
+{
+  "name": "steam-custom-buttons-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that adds custom buttons with user-defined links to Steam profiles.",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.273",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.3"
+  }
+}

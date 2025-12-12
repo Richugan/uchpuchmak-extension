@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Steam Profile Custom Buttons</title>
+    <style>
+      :root {
+        --bg: #0b1520;
+        --panel: #0f1e2d;
+        --text: #e9f1fb;
+        --muted: #98a7b9;
+        --accent: #66c0f4;
+        --stroke: #1f3246;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(120% 120% at 20% 20%, #14273a, #0b1520 45%),
+          radial-gradient(
+            80% 80% at 80% 0%,
+            rgba(102, 192, 244, 0.08),
+            transparent 55%
+          ),
+          var(--bg);
+        color: var(--text);
+        padding: 32px 24px 48px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+        letter-spacing: 0.01em;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+      main {
+        max-width: 760px;
+        min-width: 700px;
+        margin: 0 auto;
+      }
+      .card {
+        margin-top: 18px;
+        padding: 20px;
+        background: linear-gradient(
+          145deg,
+          rgba(15, 30, 45, 0.9),
+          rgba(17, 34, 50, 0.9)
+        );
+        border: 1px solid var(--stroke);
+        border-radius: 14px;
+        box-shadow: 0 18px 55px rgba(5, 10, 15, 0.4);
+      }
+      .button-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .text-input {
+        padding: 12px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .text-input:focus {
+        border-color: rgba(102, 192, 244, 0.6);
+        box-shadow: 0 0 0 3px rgba(102, 192, 244, 0.18);
+      }
+      .url-input {
+        font-family: "Cascadia Code", "SFMono-Regular", Consolas,
+          "Liberation Mono", monospace;
+        flex: 1;
+      }
+      .label-input {
+        width: 200px;
+      }
+      button {
+        border: none;
+        padding: 11px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--stroke);
+        transition: transform 0.08s ease, background 0.15s ease,
+          border-color 0.15s ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.12);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      button.primary {
+        background: linear-gradient(135deg, #66c0f4, #4ab0e7);
+        color: #071019;
+        border-color: transparent;
+      }
+      button.primary:hover {
+        background: linear-gradient(135deg, #7bc8f6, #5bb9eb);
+      }
+      button.ghost {
+        background: transparent;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+      #status {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      #status.visible {
+        opacity: 1;
+      }
+      .hint {
+        margin-top: 16px;
+      }
+      @media (max-width: 700px) {
+        body {
+          padding: 20px 16px 32px;
+        }
+        .button-row {
+          grid-template-columns: 1fr;
+        }
+        .actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Steam Profile Custom Buttons</h1>
+        <p>Set labels and URLs it will add profile id to custom link</p>
+        <p>Example: https://wsteamcommunity.com/</p>
+      </header>
+
+      <section class="card">
+        <div id="button-list"></div>
+        <div class="actions">
+          <button id="add-button" type="button">Add Button</button>
+          <div style="display: flex; gap: 10px">
+            <button id="save-button" type="button" class="primary">Save</button>
+          </div>
+        </div>
+        <p id="status" aria-live="polite"></p>
+      </section>
+
+      <p class="hint">
+        Tip: include https:// in your URLs. Buttons show in a custom showcase on
+        Steam profiles.
+      </p>
+    </main>
+
+    <script src="dist/options.js" defer></script>
+  </body>
+</html>
