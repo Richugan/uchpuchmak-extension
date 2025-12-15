@@ -1,10 +1,19 @@
 "use strict";
 (function () {
     const STORAGE_KEY = "buttons";
+    const SHOW_OPEN_ALL_KEY = "showOpenAll";
     const list = document.getElementById("button-list");
     const addButton = document.getElementById("add-button");
     const saveButton = document.getElementById("save-button");
     const status = document.getElementById("status");
+    const showOpenAllToggle = document.getElementById("show-open-all");
+    function sanitizeUrl(url) {
+        const trimmed = (url || "").trim();
+        if (trimmed.endsWith("/")) {
+            return trimmed.slice(0, -1);
+        }
+        return trimmed;
+    }
     function setIdButtonState(button, enabled) {
         button.dataset.includeId = String(enabled);
         button.classList.toggle("active", enabled);
@@ -51,7 +60,7 @@
             var _a, _b;
             const inputs = child.querySelectorAll("input");
             const label = (((_a = inputs[0]) === null || _a === void 0 ? void 0 : _a.value) || "").trim();
-            const url = (((_b = inputs[1]) === null || _b === void 0 ? void 0 : _b.value) || "").trim();
+            const url = sanitizeUrl(((_b = inputs[1]) === null || _b === void 0 ? void 0 : _b.value) || "");
             const idToggle = child.querySelector(".add-id-btn");
             const includeId = (idToggle === null || idToggle === void 0 ? void 0 : idToggle.dataset.includeId) !== "false";
             if (url.length > 0) {
@@ -67,7 +76,7 @@
     }
     async function loadFromStorage() {
         return new Promise((resolve) => {
-            chrome.storage.sync.get({ [STORAGE_KEY]: [] }, (result) => {
+            chrome.storage.sync.get({ [STORAGE_KEY]: [], [SHOW_OPEN_ALL_KEY]: true }, (result) => {
                 const buttons = result[STORAGE_KEY] || [];
                 list.innerHTML = "";
                 if (buttons.length === 0) {
@@ -76,6 +85,7 @@
                 else {
                     buttons.forEach((btn) => list.appendChild(createRow(btn)));
                 }
+                showOpenAllToggle.checked = result[SHOW_OPEN_ALL_KEY] !== false;
                 resolve();
             });
         });
@@ -91,7 +101,10 @@
         });
         saveButton.addEventListener("click", () => {
             const buttons = readRows();
-            chrome.storage.sync.set({ [STORAGE_KEY]: buttons }, () => {
+            chrome.storage.sync.set({
+                [STORAGE_KEY]: buttons,
+                [SHOW_OPEN_ALL_KEY]: showOpenAllToggle.checked,
+            }, () => {
                 showStatus(buttons.length ? "Saved to Chrome Sync" : "Cleared (no buttons saved)");
             });
         });

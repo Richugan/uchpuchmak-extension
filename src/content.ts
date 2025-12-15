@@ -5,24 +5,74 @@
     includeId?: boolean;
   }
 
+  interface Settings {
+    buttons: ButtonConfig[];
+    showOpenAll: boolean;
+  }
+
   const STORAGE_KEY = "buttons";
   const SHOWCASE_ID = "steam-custom-link-showcase";
+  const SHOW_OPEN_ALL_KEY = "showOpenAll";
+  const OPEN_ALL_ID = `${SHOWCASE_ID}-open-all`;
+  const STORAGE_DEFAULTS = {
+    [STORAGE_KEY]: [] as ButtonConfig[],
+    [SHOW_OPEN_ALL_KEY]: true,
+  };
+  let currentSettings: Settings = { buttons: [], showOpenAll: true };
 
-  async function loadButtons(): Promise<ButtonConfig[]> {
+  function sanitizeUrl(url: string): string {
+    const trimmed = (url || "").trim();
+    if (trimmed.endsWith("/")) {
+      return trimmed.slice(0, -1);
+    }
+    return trimmed;
+  }
+
+  function truncate(value: string, max = 60): string {
+    if (value.length <= max) {
+      return value;
+    }
+    return `${value.slice(0, max - 3)}...`;
+  }
+
+  function normalizeButtons(raw: ButtonConfig[]): ButtonConfig[] {
+    return (raw || [])
+      .filter((btn) => btn && typeof btn.url === "string")
+      .map((btn) => ({
+        label: (btn.label || "").trim() || (btn.url || "").trim(),
+        url: sanitizeUrl(btn.url),
+        includeId: btn.includeId !== false,
+      }))
+      .filter((btn) => btn.url.length > 0);
+  }
+
+  function buildSettings(raw: {
+    [STORAGE_KEY]: ButtonConfig[];
+    [SHOW_OPEN_ALL_KEY]: boolean;
+  }): Settings {
+    return {
+      buttons: normalizeButtons(raw[STORAGE_KEY]),
+      showOpenAll: raw[SHOW_OPEN_ALL_KEY] !== false,
+    };
+  }
+
+  async function loadSettings(): Promise<Settings> {
     return new Promise((resolve) => {
-      chrome.storage.sync.get({ [STORAGE_KEY]: [] }, (result) => {
-        const stored = (result[STORAGE_KEY] as ButtonConfig[]) || [];
-        const sanitized = stored
-          .filter((btn) => btn && typeof btn.url === "string")
-          .map((btn) => ({
-            label: (btn.label || "").trim() || (btn.url || "").trim(),
-            url: (btn.url || "").trim(),
-            includeId: btn.includeId !== false,
-          }))
-          .filter((btn) => btn.url.length > 0);
-        resolve(sanitized);
+      chrome.storage.sync.get(STORAGE_DEFAULTS, (result) => {
+        const settings = buildSettings(result as typeof STORAGE_DEFAULTS);
+        currentSettings = settings;
+        resolve(settings);
       });
     });
+  }
+
+  function getProfilePath(): string {
+    return window.location.href.replace("https://steamcommunity.com", "");
+  }
+
+  function getButtonHref(button: ButtonConfig): string {
+    const profileId = getProfilePath();
+    return button.includeId !== false ? button.url + profileId : button.url;
   }
 
   function findShowcasesContainer(): HTMLElement | null {
@@ -31,20 +81,31 @@
       document.querySelector<HTMLElement>(".profile_showcases") ||
       document.querySelector<HTMLElement>(".profile_customization_area") ||
       document.querySelector<HTMLElement>("#profile_customization");
-    return container;
+    if (container) {
+      return container;
+    }
+
+    // If no showcases exist yet, create a customization container in the left column.
+    const leftColumn = document.querySelector<HTMLElement>(".profile_leftcol");
+    if (!leftColumn) {
+      return null;
+    }
+
+    const fallback = document.createElement("div");
+    fallback.className = "profile_customization_area";
+
+    leftColumn.insertBefore(fallback, leftColumn.firstChild);
+    return fallback;
   }
 
   function buildButton(button: ButtonConfig): HTMLAnchorElement {
-    const profileId = window.location.href.replace(
-      "https://steamcommunity.com",
-      ""
-    );
     const anchor = document.createElement("a");
     anchor.className = "custom-link-btn";
-    anchor.href = button.includeId !== false ? button.url + profileId : button.url;
+    anchor.href = getButtonHref(button);
     anchor.target = "_blank";
     anchor.rel = "noreferrer noopener";
-    anchor.textContent = button.label || button.url;
+    const display = button.label || truncate(button.url);
+    anchor.textContent = display;
     return anchor;
   }
 
@@ -63,11 +124,6 @@
         margin-bottom: 12px;
         box-shadow: 0 12px 28px rgba(0,0,0,0.35);
       }
-      #${SHOWCASE_ID} .custom-button-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
       #${SHOWCASE_ID} .custom-link-btn {
         display: inline-flex;
         align-items: center;
@@ -82,6 +138,11 @@
         transition: border-color 0.16s ease, background 0.16s ease, transform 0.08s ease;
         word-break: break-word;
       }
+      #${SHOWCASE_ID} .custom-links-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      }
       #${SHOWCASE_ID} .custom-link-btn:hover {
         background: rgba(102,192,244,0.12);
         border-color: rgba(102,192,244,0.4);
@@ -90,12 +151,21 @@
       #${SHOWCASE_ID} .custom-link-btn:active {
         transform: translateY(0);
       }
+      #${SHOWCASE_ID} .custom-button-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      #${SHOWCASE_ID} .open-all-btn {
+        cursor: pointer;
+        padding: 4px 3px 4px 6px;
+      }
     `;
 
     document.head.appendChild(style);
   }
 
-  function renderButtons(buttons: ButtonConfig[]): void {
+  function renderButtons(settings: Settings): void {
     const parent = findShowcasesContainer();
     if (!parent) {
       return;
@@ -106,7 +176,7 @@
       existing.remove();
     }
 
-    if (buttons.length === 0) {
+    if (settings.buttons.length === 0) {
       return;
     }
 
@@ -115,12 +185,30 @@
     showcase.className = "profile_customization";
 
     const header = document.createElement("div");
-    header.className = "profile_customization_header";
+    header.className = "profile_customization_header custom-links-header";
     header.textContent = "Custom Links";
 
     const grid = document.createElement("div");
     grid.className = "custom-button-grid profile_customization_block";
-    buttons.forEach((button) => grid.appendChild(buildButton(button)));
+    if (settings.showOpenAll) {
+      const openAll = document.createElement("button");
+      openAll.type = "button";
+      openAll.id = OPEN_ALL_ID;
+      openAll.className = "custom-link-btn open-all-btn";
+      openAll.textContent = "Open All 🡥";
+      openAll.addEventListener("click", () => {
+        settings.buttons.forEach((btn) => {
+          const href = getButtonHref(btn);
+          if (href) {
+            window.open(href, "_blank", "noopener,noreferrer");
+          }
+        });
+      });
+
+      header.appendChild(openAll);
+    }
+
+    settings.buttons.forEach((button) => grid.appendChild(buildButton(button)));
 
     showcase.append(header, grid);
 
@@ -134,24 +222,35 @@
 
   async function init(): Promise<void> {
     injectStyles();
-    const buttons = await loadButtons();
-    renderButtons(buttons);
+    const settings = await loadSettings();
+    renderButtons(settings);
   }
 
   function setupChangeListener(): void {
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName !== "sync" || !changes[STORAGE_KEY]) {
+      if (areaName !== "sync") {
         return;
       }
 
-      const newButtons = changes[STORAGE_KEY].newValue as ButtonConfig[];
-      renderButtons(
-        (newButtons || []).map((btn) => ({
-          label: (btn.label || "").trim() || (btn.url || "").trim(),
-          url: (btn.url || "").trim(),
-          includeId: btn.includeId !== false,
-        }))
-      );
+      let dirty = false;
+      const nextSettings: Settings = { ...currentSettings };
+
+      if (changes[STORAGE_KEY]) {
+        const newButtons = changes[STORAGE_KEY].newValue as ButtonConfig[];
+        nextSettings.buttons = normalizeButtons(newButtons);
+        dirty = true;
+      }
+
+      if (changes[SHOW_OPEN_ALL_KEY]) {
+        nextSettings.showOpenAll =
+          (changes[SHOW_OPEN_ALL_KEY].newValue as boolean) !== false;
+        dirty = true;
+      }
+
+      if (dirty) {
+        currentSettings = nextSettings;
+        renderButtons(nextSettings);
+      }
     });
   }
 

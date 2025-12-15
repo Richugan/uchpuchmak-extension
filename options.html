@@ -138,6 +138,18 @@
         margin-top: 14px;
         flex-wrap: wrap;
       }
+      .option-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        color: var(--muted);
+      }
+      .option-row input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+      }
       #status {
         opacity: 0;
         transition: opacity 0.2s ease;
@@ -177,6 +189,10 @@
 
       <section class="card">
         <div id="button-list"></div>
+        <label class="option-row">
+          <input type="checkbox" id="show-open-all" checked />
+          <span>Show “Open All” button on profiles</span>
+        </label>
         <div class="actions">
           <button id="add-button" type="button">Add Button</button>
           <div style="display: flex; gap: 10px">
