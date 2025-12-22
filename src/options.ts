@@ -13,6 +13,15 @@
   const saveButton = document.getElementById(
     "save-button"
   ) as HTMLButtonElement;
+  const exportButton = document.getElementById(
+    "export-button"
+  ) as HTMLButtonElement;
+  const importButton = document.getElementById(
+    "import-button"
+  ) as HTMLButtonElement;
+  const importInput = document.getElementById(
+    "import-input"
+  ) as HTMLInputElement;
   const status = document.getElementById("status") as HTMLParagraphElement;
   const showOpenAllToggle = document.getElementById(
     "show-open-all"
@@ -30,6 +39,17 @@
     button.dataset.includeId = String(enabled);
     button.classList.toggle("active", enabled);
     button.textContent = enabled ? "/steamid ✓" : "/steamid";
+  }
+
+  function normalizeButtons(raw: ButtonConfig[]): ButtonConfig[] {
+    return (raw || [])
+      .filter((btn) => btn && typeof btn.url === "string")
+      .map((btn) => ({
+        label: (btn.label || "").trim(),
+        url: sanitizeUrl(btn.url),
+        includeId: btn.includeId !== false,
+      }))
+      .filter((btn) => btn.url.length > 0);
   }
 
   function createRow(value?: ButtonConfig): HTMLDivElement {
@@ -72,6 +92,16 @@
     return row;
   }
 
+  function setButtonRows(buttons: ButtonConfig[]): void {
+    list.innerHTML = "";
+    if (!buttons.length) {
+      list.appendChild(createRow());
+      return;
+    }
+
+    buttons.forEach((btn) => list.appendChild(createRow(btn)));
+  }
+
   function readRows(): ButtonConfig[] {
     const buttons: ButtonConfig[] = [];
 
@@ -101,13 +131,7 @@
         { [STORAGE_KEY]: [], [SHOW_OPEN_ALL_KEY]: true },
         (result) => {
           const buttons = (result[STORAGE_KEY] as ButtonConfig[]) || [];
-          list.innerHTML = "";
-
-          if (buttons.length === 0) {
-            list.appendChild(createRow());
-          } else {
-            buttons.forEach((btn) => list.appendChild(createRow(btn)));
-          }
+          setButtonRows(normalizeButtons(buttons));
 
           showOpenAllToggle.checked = result[SHOW_OPEN_ALL_KEY] !== false;
 
@@ -115,6 +139,55 @@
         }
       );
     });
+  }
+
+  function exportConfig(): void {
+    const payload = {
+      buttons: readRows(),
+      showOpenAll: showOpenAllToggle.checked,
+      exportedAt: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "steam-custom-buttons.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    showStatus("Exported JSON");
+  }
+
+  function handleImport(data: unknown): void {
+    if (!data || typeof data !== "object") {
+      throw new Error("Invalid JSON");
+    }
+
+    const parsed = data as {
+      buttons?: ButtonConfig[];
+      showOpenAll?: boolean;
+    };
+
+    const buttons = normalizeButtons(parsed.buttons || []);
+    const showOpenAll = parsed.showOpenAll !== false;
+
+    setButtonRows(buttons);
+    showOpenAllToggle.checked = showOpenAll;
+
+    chrome.storage.sync.set(
+      { [STORAGE_KEY]: buttons, [SHOW_OPEN_ALL_KEY]: showOpenAll },
+      () => {
+        showStatus("Imported & saved");
+      }
+    );
+  }
+
+  async function importConfig(file: File): Promise<void> {
+    const text = await file.text();
+    const json = JSON.parse(text);
+    handleImport(json);
   }
 
   function hookEvents(): void {
@@ -126,6 +199,28 @@
       });
     });
 
+    exportButton.addEventListener("click", () => {
+      exportConfig();
+    });
+
+    importButton.addEventListener("click", () => {
+      importInput.click();
+    });
+
+    importInput.addEventListener("change", () => {
+      const file = importInput.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      importConfig(file).catch((error) => {
+        console.error("Failed to import JSON", error);
+        showStatus("Could not import file");
+      });
+
+      importInput.value = "";
+    });
+
     saveButton.addEventListener("click", () => {
       const buttons = readRows();
       chrome.storage.sync.set(
@@ -134,9 +229,11 @@
           [SHOW_OPEN_ALL_KEY]: showOpenAllToggle.checked,
         },
         () => {
-        showStatus(
-          buttons.length ? "Saved to Chrome Sync" : "Cleared (no buttons saved)"
-        );
+          showStatus(
+            buttons.length
+              ? "Saved to Chrome Sync"
+              : "Cleared (no buttons saved)"
+          );
         }
       );
     });

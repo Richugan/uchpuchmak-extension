@@ -189,6 +189,7 @@
 
       <section class="card">
         <div id="button-list"></div>
+        <input type="file" id="import-input" accept="application/json" hidden />
         <label class="option-row">
           <input type="checkbox" id="show-open-all" checked />
           <span>Show “Open All” button on profiles</span>
@@ -196,6 +197,12 @@
         <div class="actions">
           <button id="add-button" type="button">Add Button</button>
           <div style="display: flex; gap: 10px">
+            <button id="export-button" type="button" class="ghost">
+              Export JSON
+            </button>
+            <button id="import-button" type="button" class="ghost">
+              Import JSON
+            </button>
             <button id="save-button" type="button" class="primary">Save</button>
           </div>
         </div>
