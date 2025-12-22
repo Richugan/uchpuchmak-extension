@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Steam Profile Custom Buttons",
   "version": "1.2.0",
-  "description": "Add custom link buttons to Steam profiles using redirect links",
+  "description": "Add custom link buttons to Steam profiles",
   "permissions": [
     "storage"
   ],

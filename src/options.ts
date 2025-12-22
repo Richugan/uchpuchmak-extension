@@ -40,7 +40,7 @@
   function setIdButtonState(button: HTMLButtonElement, enabled: boolean): void {
     button.dataset.includeId = String(enabled);
     button.classList.toggle("active", enabled);
-    button.textContent = enabled ? "/steamID64 ✓" : "/steamID64";
+    button.textContent = enabled ? "/ID64 ✓" : "/ID64";
   }
 
   function normalizeButtons(raw: ButtonConfig[]): ButtonConfig[] {
