@@ -63,10 +63,47 @@
         flex-direction: row;
         align-items: center;
         flex-wrap: wrap;
+        padding: 4px 6px;
+        border-radius: 12px;
+        transition: background 0.12s ease, border-color 0.12s ease,
+          opacity 0.12s ease;
+      }
+      .button-row.dragging {
+        opacity: 0.65;
+        background: rgba(102, 192, 244, 0.08);
+        border: 1px dashed rgba(102, 192, 244, 0.3);
       }
       .id-label {
         color: var(--muted);
         font-size: 13px;
+      }
+      .drag-handle {
+        cursor: grab;
+        padding: 10px 12px;
+        border-color: var(--stroke);
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .drag-handle:active {
+        cursor: grabbing;
+      }
+      .drag-icon {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        background-image: repeating-linear-gradient(
+          to bottom,
+          var(--muted),
+          var(--muted) 2px,
+          transparent 2px,
+          transparent 4px
+        );
+        background-size: 14px 4px;
+        background-repeat: repeat-y;
+        background-position: center;
+        opacity: 0.8;
       }
       .add-id-btn {
         padding: 10px 12px;
@@ -96,7 +133,7 @@
         flex: 1;
       }
       .label-input {
-        width: 200px;
+        width: 120px;
       }
       button {
         border: none;
@@ -129,6 +166,26 @@
       button.ghost {
         background: transparent;
         color: var(--muted);
+      }
+      .remove-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #f28484;
+        border-color: rgba(242, 132, 132, 0.4);
+      }
+      .remove-btn:hover {
+        background: rgba(242, 132, 132, 0.12);
+        border-color: rgba(242, 132, 132, 0.55);
+        color: #ff9a9a;
+      }
+      .remove-icon {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cpath d='M10 11v6'/%3E%3Cpath d='M14 11v6'/%3E%3Cpath d='M5 6l1 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-14'/%3E%3C/svg%3E")
+          center / contain no-repeat;
+        background: currentColor;
       }
       .actions {
         display: flex;

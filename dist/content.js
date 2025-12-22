@@ -47,8 +47,44 @@
             });
         });
     }
+    function stripTrailingSlash(path) {
+        if (path.length > 1 && path.endsWith("/")) {
+            return path.slice(0, -1);
+        }
+        return path;
+    }
+    function findSteamIdFromScripts() {
+        const scripts = Array.from(document.scripts);
+        console.log(scripts);
+        for (const script of scripts) {
+            const text = script.textContent;
+            if (!text) {
+                continue;
+            }
+            const match = text.match(/"steamid"\s*:\s*"(\d{5,})"/);
+            if (match) {
+                return match[1];
+            }
+        }
+        return null;
+    }
     function getProfilePath() {
-        return window.location.href.replace("https://steamcommunity.com", "");
+        var _a;
+        const ogUrl = ((_a = document
+            .querySelector('meta[property="og:url"]')) === null || _a === void 0 ? void 0 : _a.getAttribute("content")) || "";
+        const candidate = ogUrl || window.location.href;
+        const url = new URL(candidate);
+        const rawPath = stripTrailingSlash(url.pathname);
+        const profilesMatch = rawPath.match(/^\/profiles\/(\d+)/);
+        if (profilesMatch) {
+            return `/${profilesMatch[1]}`;
+        }
+        const vanityMatch = rawPath.match(/^\/id\/([^/]+)/);
+        if (vanityMatch) {
+            const steamId = findSteamIdFromScripts();
+            return `/${steamId || vanityMatch[1]}`;
+        }
+        return rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
     }
     function getButtonHref(button) {
         const profileId = getProfilePath();

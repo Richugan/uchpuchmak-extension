@@ -2,6 +2,8 @@
 (function () {
     const STORAGE_KEY = "buttons";
     const SHOW_OPEN_ALL_KEY = "showOpenAll";
+    const DRAGGING_CLASS = "dragging";
+    let draggingRow = null;
     const list = document.getElementById("button-list");
     const addButton = document.getElementById("add-button");
     const saveButton = document.getElementById("save-button");
@@ -20,7 +22,7 @@
     function setIdButtonState(button, enabled) {
         button.dataset.includeId = String(enabled);
         button.classList.toggle("active", enabled);
-        button.textContent = enabled ? "/steamid ✓" : "/steamid";
+        button.textContent = enabled ? "/steamID64 ✓" : "/steamID64";
     }
     function normalizeButtons(raw) {
         return (raw || [])
@@ -36,6 +38,14 @@
         var _a, _b;
         const row = document.createElement("div");
         row.className = "button-row";
+        const dragHandle = document.createElement("button");
+        dragHandle.type = "button";
+        dragHandle.className = "ghost drag-handle";
+        dragHandle.title = "Drag to reorder";
+        dragHandle.setAttribute("aria-label", "Drag to reorder");
+        const dragIcon = document.createElement("span");
+        dragIcon.className = "drag-icon";
+        dragHandle.appendChild(dragIcon);
         const labelInput = document.createElement("input");
         labelInput.type = "text";
         labelInput.placeholder = "Label";
@@ -56,15 +66,18 @@
         });
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
-        removeBtn.textContent = "Remove";
-        removeBtn.className = "ghost";
+        removeBtn.className = "ghost remove-btn";
+        const removeIcon = document.createElement("span");
+        removeIcon.className = "remove-icon";
+        removeBtn.appendChild(removeIcon);
         removeBtn.addEventListener("click", () => {
             row.remove();
             if (!list.children.length) {
                 list.appendChild(createRow());
             }
         });
-        row.append(labelInput, urlInput, addIdBtn, removeBtn);
+        row.append(dragHandle, labelInput, urlInput, addIdBtn, removeBtn);
+        setupDragAndDrop(row, dragHandle);
         return row;
     }
     function setButtonRows(buttons) {
@@ -140,6 +153,51 @@
         const json = JSON.parse(text);
         handleImport(json);
     }
+    function setupDragAndDrop(row, handle) {
+        handle.draggable = true;
+        handle.addEventListener("dragstart", (event) => {
+            var _a, _b;
+            draggingRow = row;
+            row.classList.add(DRAGGING_CLASS);
+            (_a = event.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData("text/plain", "");
+            (_b = event.dataTransfer) === null || _b === void 0 ? void 0 : _b.setDragImage(row, 25, 25);
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = "move";
+            }
+        });
+        handle.addEventListener("dragend", () => {
+            row.classList.remove(DRAGGING_CLASS);
+            draggingRow = null;
+        });
+    }
+    function handleListDragOver(event) {
+        if (!draggingRow) {
+            return;
+        }
+        event.preventDefault();
+        const afterRow = getRowAfter(list, event.clientY);
+        if (!afterRow) {
+            list.appendChild(draggingRow);
+        }
+        else if (afterRow !== draggingRow) {
+            list.insertBefore(draggingRow, afterRow);
+        }
+    }
+    function getRowAfter(container, y) {
+        const eligible = Array.from(container.querySelectorAll(".button-row")).filter((row) => row !== draggingRow);
+        let closest = {
+            offset: Number.NEGATIVE_INFINITY,
+            element: null,
+        };
+        eligible.forEach((row) => {
+            const rect = row.getBoundingClientRect();
+            const offset = y - rect.top - rect.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                closest = { offset, element: row };
+            }
+        });
+        return closest.element;
+    }
     function hookEvents() {
         addButton.addEventListener("click", () => {
             var _a;
@@ -167,6 +225,8 @@
             });
             importInput.value = "";
         });
+        list.addEventListener("dragover", handleListDragOver);
+        list.addEventListener("drop", (event) => event.preventDefault());
         saveButton.addEventListener("click", () => {
             const buttons = readRows();
             chrome.storage.sync.set({
