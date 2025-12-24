@@ -90,6 +90,8 @@
       }
     });
 
+    row.append(labelInput, urlInput, addIdBtn, removeBtn);
+
     return row;
   }
 
