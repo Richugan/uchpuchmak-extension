@@ -7,8 +7,6 @@
 
   const STORAGE_KEY = "buttons";
   const SHOW_OPEN_ALL_KEY = "showOpenAll";
-  const DRAGGING_CLASS = "dragging";
-  let draggingRow: HTMLDivElement | null = null;
 
   const list = document.getElementById("button-list") as HTMLDivElement;
   const addButton = document.getElementById("add-button") as HTMLButtonElement;
@@ -58,15 +56,6 @@
     const row = document.createElement("div");
     row.className = "button-row";
 
-    const dragHandle = document.createElement("button");
-    dragHandle.type = "button";
-    dragHandle.className = "ghost drag-handle";
-    dragHandle.title = "Drag to reorder";
-    dragHandle.setAttribute("aria-label", "Drag to reorder");
-    const dragIcon = document.createElement("span");
-    dragIcon.className = "drag-icon";
-    dragHandle.appendChild(dragIcon);
-
     const labelInput = document.createElement("input");
     labelInput.type = "text";
     labelInput.placeholder = "Label";
@@ -101,8 +90,6 @@
       }
     });
 
-    row.append(dragHandle, labelInput, urlInput, addIdBtn, removeBtn);
-    setupDragAndDrop(row, dragHandle);
     return row;
   }
 
@@ -204,66 +191,6 @@
     handleImport(json);
   }
 
-  function setupDragAndDrop(
-    row: HTMLDivElement,
-    handle: HTMLButtonElement
-  ): void {
-    handle.draggable = true;
-
-    handle.addEventListener("dragstart", (event) => {
-      draggingRow = row;
-      row.classList.add(DRAGGING_CLASS);
-      event.dataTransfer?.setData("text/plain", "");
-      event.dataTransfer?.setDragImage(row, 25, 25);
-      if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = "move";
-      }
-    });
-
-    handle.addEventListener("dragend", () => {
-      row.classList.remove(DRAGGING_CLASS);
-      draggingRow = null;
-    });
-  }
-
-  function handleListDragOver(event: DragEvent): void {
-    if (!draggingRow) {
-      return;
-    }
-
-    event.preventDefault();
-    const afterRow = getRowAfter(list, event.clientY);
-    if (!afterRow) {
-      list.appendChild(draggingRow);
-    } else if (afterRow !== draggingRow) {
-      list.insertBefore(draggingRow, afterRow);
-    }
-  }
-
-  function getRowAfter(
-    container: HTMLElement,
-    y: number
-  ): HTMLDivElement | null {
-    const eligible = Array.from(
-      container.querySelectorAll<HTMLDivElement>(".button-row")
-    ).filter((row) => row !== draggingRow);
-
-    let closest: { offset: number; element: HTMLDivElement | null } = {
-      offset: Number.NEGATIVE_INFINITY,
-      element: null,
-    };
-
-    eligible.forEach((row) => {
-      const rect = row.getBoundingClientRect();
-      const offset = y - rect.top - rect.height / 2;
-      if (offset < 0 && offset > closest.offset) {
-        closest = { offset, element: row };
-      }
-    });
-
-    return closest.element;
-  }
-
   function hookEvents(): void {
     addButton.addEventListener("click", () => {
       list.appendChild(createRow());
@@ -294,9 +221,6 @@
 
       importInput.value = "";
     });
-
-    list.addEventListener("dragover", handleListDragOver);
-    list.addEventListener("drop", (event) => event.preventDefault());
 
     saveButton.addEventListener("click", () => {
       const buttons = readRows();

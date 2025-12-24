@@ -68,42 +68,9 @@
         transition: background 0.12s ease, border-color 0.12s ease,
           opacity 0.12s ease;
       }
-      .button-row.dragging {
-        opacity: 0.65;
-        background: rgba(102, 192, 244, 0.08);
-        border: 1px dashed rgba(102, 192, 244, 0.3);
-      }
       .id-label {
         color: var(--muted);
         font-size: 13px;
-      }
-      .drag-handle {
-        cursor: grab;
-        padding: 10px 12px;
-        border-color: var(--stroke);
-        min-width: 44px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .drag-handle:active {
-        cursor: grabbing;
-      }
-      .drag-icon {
-        width: 14px;
-        height: 14px;
-        display: inline-block;
-        background-image: repeating-linear-gradient(
-          to bottom,
-          var(--muted),
-          var(--muted) 2px,
-          transparent 2px,
-          transparent 4px
-        );
-        background-size: 14px 4px;
-        background-repeat: repeat-y;
-        background-position: center;
-        opacity: 0.8;
       }
       .add-id-btn {
         padding: 10px 12px;
