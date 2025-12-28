@@ -60,18 +60,27 @@
         const removeIcon = document.createElement("span");
         removeIcon.className = "remove-icon";
         removeBtn.appendChild(removeIcon);
-        removeBtn.addEventListener("click", () => {
-            const rows = document.getElementsByClassName("button-row");
-            if (rows.length > 0) {
-                rows[0].remove();
-            }
-            // row.remove();
-            // if (!list.children.length) {
-            //   list.appendChild(createRow());
-            // }
+        removeBtn.addEventListener("pointerdown", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        removeBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            removeRow(row);
         });
         row.append(labelInput, urlInput, addIdBtn, removeBtn);
         return row;
+    }
+    function removeRow(row) {
+        if (row.contains(document.activeElement)) {
+            addButton.focus({ preventScroll: true });
+        }
+        row.remove();
+        if (!list.children.length) {
+            const replacement = createRow();
+            list.appendChild(replacement);
+        }
     }
     function setButtonRows(buttons) {
         list.innerHTML = "";

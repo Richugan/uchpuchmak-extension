@@ -83,16 +83,32 @@
     const removeIcon = document.createElement("span");
     removeIcon.className = "remove-icon";
     removeBtn.appendChild(removeIcon);
-    removeBtn.addEventListener("click", () => {
-      row.remove();
-      if (!list.children.length) {
-        list.appendChild(createRow());
-      }
+    removeBtn.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    removeBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      removeRow(row);
     });
 
     row.append(labelInput, urlInput, addIdBtn, removeBtn);
 
     return row;
+  }
+
+  function removeRow(row: HTMLDivElement): void {
+    if (row.contains(document.activeElement)) {
+      addButton.focus({ preventScroll: true });
+    }
+
+    row.remove();
+
+    if (!list.children.length) {
+      const replacement = createRow();
+      list.appendChild(replacement);
+    }
   }
 
   function setButtonRows(buttons: ButtonConfig[]): void {
@@ -154,11 +170,14 @@
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: "application/json",
     });
+
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = "steam-custom-buttons.json";
+
     anchor.click();
+
     URL.revokeObjectURL(url);
     showStatus("Exported JSON");
   }
